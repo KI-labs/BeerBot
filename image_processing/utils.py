@@ -4,7 +4,7 @@ import time
 from picamera import PiCamera
 
 
-def take_picture(out_dir='/home/pi/BeerBot/image_processing/ims', out_fmt='png'):
+def take_picture(out_dir='../data/raw', out_fmt='png'):
     """
 
     Args:
