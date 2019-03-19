@@ -1,9 +1,10 @@
 import os
-import time
 import re
-from slackclient import SlackClient
-from file_utils import get_latest_image
+import time
 from dotenv import load_dotenv
+from slackclient import SlackClient
+
+from file_utils import get_latest_image
 
 load_dotenv()
 
