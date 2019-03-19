@@ -34,6 +34,4 @@ def update_inventory(inventory_file, tstamp, num):
     with open(inventory_file, 'a+') as out:
         out.write('{},{}'.format(tstamp, num)
 
-# TODO -> delete me
-if __name__ == "__main__":
-    take_picture()
+

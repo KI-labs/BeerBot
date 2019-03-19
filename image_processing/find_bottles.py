@@ -60,8 +60,3 @@ def find_bottles(input_im, output_im):
 
     return len(centers)
 
-
-# TODO -> delete me
-if __name__ == "__main__":
-    # load image
-    find_bottles('1553004547.png', 'test.png')
