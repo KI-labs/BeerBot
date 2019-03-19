@@ -6,7 +6,7 @@ from datetime import datetime as dt
 from dotenv import load_dotenv
 from slackclient import SlackClient
 
-from file_utils import get_latest_image, get_current_inventory
+from util.file_utils import get_latest_image, get_current_inventory
 
 load_dotenv()
 
@@ -98,7 +98,7 @@ def handle_command(command, channel):
 
 if __name__ == "__main__":
     if slack_client.rtm_connect(with_team_state=False):
-        print("Starter Bot connected and running!")
+        print("Beer Bot listener connected and running!")
         # Read bot's user ID by calling Web API method `auth.test`
         beerbot_id = slack_client.api_call("auth.test")["user_id"]
         while True:
