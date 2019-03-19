@@ -10,7 +10,7 @@ def is_door_closed():
 
     # Check if every image size falls within the "approved" window
     for image in images:
-        if not (140000 < os.path.getsize(image) < 155000):
+        if not (138000 < os.path.getsize(image) < 155000):
             return False
 
     return True
