@@ -22,7 +22,7 @@ for namer, xy in templates.items():
     plt.imshow(result)
     plt.set_title(namer)
     plt.savefig('{}.png'.format(namer))
-#
+
 # ij = np.unravel_index(np.argmax(result), result.shape)
 # x, y = ij[::-1]
 #
