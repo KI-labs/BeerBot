@@ -2,6 +2,7 @@ import os
 import time
 import re
 from slackclient import SlackClient
+from file_utils import get_latest_image
 
 # instantiate Slack client
 slack_client = SlackClient(os.environ.get("SLACK_BOT_OAUTH_TOKEN"))
@@ -57,8 +58,9 @@ def handle_help_command(command, channel):
 def handle_photo_command(command, channel):
     typing_event_json = {"id": 1, "type": "typing", "channel": channel}
 
+    latest_image = get_latest_image("raw")
     slack_client.server.send_to_websocket(typing_event_json)
-    with open(os.path.join(__location__, "1552989614.png"), "rb") as file_content:
+    with open(latest_image, "rb") as file_content:
         slack_client.api_call(
             "files.upload",
             channels=channel,
