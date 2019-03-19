@@ -1,10 +1,12 @@
 import os
 import re
 import time
+from datetime import datetime as dt
+
 from dotenv import load_dotenv
 from slackclient import SlackClient
 
-from file_utils import get_latest_image
+from file_utils import get_latest_image, get_current_inventory
 
 load_dotenv()
 
@@ -45,11 +47,12 @@ def parse_direct_mention(message_text):
 
 
 def handle_inventory_command(command, channel):
+    timestamp, count = get_current_inventory()
     response = """
-    We currently have the following items in stock:
-    * 3 Franziskaner Alkoholfrei
-    * 24 Paulaner Spezi
-    """
+    As of {} there are {} bottles in the fridge
+    """.format(
+        time.strftime("%d.%m.%y %H:%M", timestamp), count
+    )
     slack_client.api_call("chat.postMessage", channel=channel, text=response)
 
 
