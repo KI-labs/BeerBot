@@ -23,7 +23,6 @@ while True:
     file_out = take_picture(q="low", bw=True, out_fmt='jpeg', sleep_time=0, out_dir="{}/temp".format(os.getenv("DATA_DIR")))
     file_path = os.path.join(os.getenv("DATA_DIR"), 'temp', file_out)
 
-    # TODO - check with template
     print('checking template')
 
     prev_door_state = current_door_state
