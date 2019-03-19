@@ -1,53 +1,67 @@
+import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
-from skimage.feature import match_template
 from PIL import Image
+from skimage import exposure
+from skimage.filters import threshold_otsu
+from skimage.measure import label, regionprops
+from skimage.morphology import binary_closing, disk, remove_small_holes
 
 
-# load image
-input_im = '/home/pi/BeerBot/image_processing/ims/1552989614.png'
-with Image.open(input_im, 'r') as src:
-    image = np.asarray(src)
+def find_bottles(input_im, output_im):
 
-# define matching "templates"
-templates = {"beer": {"x": (170, 220),
-                      "y": (75, 130)},
-             "spezi": {"x": (170, 220),
-                       "y": (75, 130)},
-             "non-alcoholic": {"x": (170, 220),
-                               "y": (75, 130)}}
-for namer, xy in templates.items():
-    part = image[xy['x'][0]:xy['x'][1], xy['y'][0]:xy['y'][1]]
-    result = match_template(image, part)
-    plt.imshow(result)
-    plt.set_title(namer)
-    plt.savefig('{}.png'.format(namer))
+    # load image
+    with Image.open(input_im, 'r').convert('L') as src:
+        image = np.asarray(src)
 
-# ij = np.unravel_index(np.argmax(result), result.shape)
-# x, y = ij[::-1]
-#
-# fig = plt.figure(figsize=(8, 3))
-# ax1 = plt.subplot(1, 3, 1)
-# ax2 = plt.subplot(1, 3, 2)
-# ax3 = plt.subplot(1, 3, 3, sharex=ax2, sharey=ax2)
-#
-# ax1.imshow(coin, cmap=plt.cm.gray)
-# ax1.set_axis_off()
-# ax1.set_title('template')
-#
-# ax2.imshow(image, cmap=plt.cm.gray)
-# ax2.set_axis_off()
-# ax2.set_title('image')
-# # highlight matched region
-# hcoin, wcoin = coin.shape
-# rect = plt.Rectangle((x, y), wcoin, hcoin, edgecolor='r', facecolor='none')
-# ax2.add_patch(rect)
-#
-# ax3.imshow(result)
-# ax3.set_axis_off()
-# ax3.set_title('`match_template`\nresult')
-# # highlight matched region
-# ax3.autoscale(False)
-# ax3.plot(x, y, 'o', markeredgecolor='r', markerfacecolor='none', markersize=10)
-#
-# plt.savefig('test.png')
+    # define image processing parameters
+    selem = disk(15)
+    min_size = 5000
+
+    # threshold image (OTSU)
+    thresh = threshold_otsu(image)
+
+    # convert to binary + cleanup
+    bw = binary_closing(image > thresh * 0.8, selem=selem)
+    bw = remove_small_holes(bw, area_threshold=min_size)
+
+    # label image regions
+    label_image = label(bw) + 1
+
+    bounds = []
+    centers = []
+    bottles = np.zeros(label_image.shape)
+    for region in regionprops(label_image):
+        m = 4 * np.pi * region.area / np.power(region.perimeter, 2)
+        if region.area > 750 and m > 0.7:
+            bottles[label_image == region.label] = 1
+
+            minr, minc, maxr, maxc = region.bbox
+            bounds.append([minc, minr, maxc - minc, maxr - minr])
+            centers.append(region.centroid)
+
+    # create ouput image
+    fig = plt.figure(frameon=False)
+    ax = plt.Axes(fig, [0., 0., 1., 1.])
+    fig.add_axes(ax)
+
+    ax.imshow(exposure.equalize_adapthist(image, clip_limit=0.03), cmap='gray', alpha=0.6)
+    ax.set_axis_off()
+    for b in bounds:
+        rect = mpatches.Rectangle((b[0], b[1]), b[2], b[3],
+                                  fill=False, edgecolor='red', linewidth=2)
+        ax.add_patch(rect)
+
+    for c in centers:
+        ax.plot(c[1], c[0], 'ro')
+
+    plt.tight_layout()
+    fig.savefig(output_im, dpi=250)
+
+    return len(centers)
+
+
+# TODO -> delete me
+if __name__ == "__main__":
+    # load image
+    find_bottles('1553004547.png', 'test.png')
