@@ -12,15 +12,15 @@ load_dotenv()
 current_door_state = "closed"
 prev_door_state = "open"
 
-
 # set template
 print('creating template')
 template_out = take_picture(template=True, q="low", bw=True, out_fmt='jpeg', sleep_time=0,
-                     out_dir="{}".format(os.getenv("DATA_DIR")))
+                            out_dir="{}".format(os.getenv("DATA_DIR")))
 template_path = os.path.join(os.getenv("DATA_DIR"), template_out)
 
 while True:
-    file_out = take_picture(q="low", bw=True, out_fmt='jpeg', sleep_time=0, out_dir="{}/temp".format(os.getenv("DATA_DIR")))
+    file_out = take_picture(q="low", bw=True, out_fmt='jpeg', sleep_time=0,
+                            out_dir="{}/temp".format(os.getenv("DATA_DIR")))
     file_path = os.path.join(os.getenv("DATA_DIR"), 'temp', file_out)
 
     print('checking template')

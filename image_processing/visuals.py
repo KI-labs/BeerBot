@@ -1,5 +1,5 @@
 import json
-
+import time
 import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
@@ -13,10 +13,12 @@ def show_results(input_im, output_im, current_inventory):
     x = []
     y = []
     age = []
+    tstamp = int(data['timestamp'])
+    curr = time.time()
     for d in data['bottles']:
         x.append(float(d['x']))
         y.append(float(d['y']))
-        age.append(float(d['age']))
+        age.append(float(d['age']) + curr - tstamp)
 
     # load image
     with Image.open(input_im, 'r').convert('L') as src:
@@ -40,6 +42,11 @@ def show_results(input_im, output_im, current_inventory):
     cb1.set_label('Beer Coldness', fontsize=16)
 
     plt.tight_layout()
+    plt.text(10, 10, curr, fontsize=25)
     fig.savefig(output_im, dpi=250)
 
     return True
+
+
+# if __name__ == "__main__":
+#     show_results('./data/raw/1553013640.png', 'test.png', './data/inventory_details.json')

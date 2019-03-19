@@ -2,9 +2,6 @@ import os
 import shlex
 from subprocess import Popen, PIPE
 
-from slackbot.file_utils import get_latest_images
-
-
 def run_cmd(cmd):
     """
     Basic function for running a subprocess call and returning response
