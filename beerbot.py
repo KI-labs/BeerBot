@@ -16,6 +16,9 @@ while True:
 
     prev_door_state = current_door_state
     current_door_state = "closed" if is_door_closed() else "open"
+    print("current_door_state: {}".format(current_door_state))
+    print("prev_door_state: {}".format(prev_door_state))
+    print("is_door_closed() -> {}".format(is_door_closed()))
 
     if current_door_state == "closed" and prev_door_state == "open":
         take_picture(
