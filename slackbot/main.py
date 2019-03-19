@@ -3,6 +3,9 @@ import time
 import re
 from slackclient import SlackClient
 from file_utils import get_latest_image
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # instantiate Slack client
 slack_client = SlackClient(os.environ.get("SLACK_BOT_OAUTH_TOKEN"))
@@ -11,7 +14,6 @@ beerbot_id = None
 
 # constants
 RTM_READ_DELAY = 1  # 1 second delay between reading from RTM
-EXAMPLE_COMMAND = "do"
 MENTION_REGEX = "^<@(|[WU].+?)>(.*)"
 
 __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
@@ -80,13 +82,7 @@ def handle_command(command, channel):
     """
         Executes bot command if the command is known
     """
-    # Default response is help text for the user
-    default_response = "Not sure what you mean. Try *{}*.".format(EXAMPLE_COMMAND)
-
-    # Finds and executes the given command, filling in response
-    response = None
-    # This is where you start to implement more commands!
-
+    print('Handling command "{}"'.format(command))
     handler_func = COMMAND_HANDLERS.get(command, handle_help_command)
     handler_func(command, channel)
 
