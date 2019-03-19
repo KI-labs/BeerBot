@@ -19,8 +19,6 @@ beerbot_id = None
 RTM_READ_DELAY = 1  # 1 second delay between reading from RTM
 MENTION_REGEX = "^<@(|[WU].+?)>(.*)"
 
-__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
-
 
 def parse_bot_commands(slack_events):
     """
@@ -46,13 +44,17 @@ def parse_direct_mention(message_text):
     return (matches.group(1), matches.group(2).strip()) if matches else (None, None)
 
 
-def handle_inventory_command(command, channel):
-    timestamp, count = get_current_inventory()
-    response = """
-    As of {} there are {} bottles in the fridge
-    """.format(
+def __message_for_inventory(inventory):
+    if not inventory:
+        return "I don't know yet what we have in stock"
+    timestamp, count = inventory
+    return "As of {} there are {} bottles in the fridge".format(
         time.strftime("%d.%m.%y %H:%M", timestamp), count
     )
+
+
+def handle_inventory_command(command, channel):
+    response = __message_for_inventory(get_current_inventory())
     slack_client.api_call("chat.postMessage", channel=channel, text=response)
 
 
@@ -61,11 +63,14 @@ def handle_help_command(command, channel):
     slack_client.api_call("chat.postMessage", channel=channel, text=response)
 
 
-def handle_photo_command(command, channel):
+def __send_typing_event(channel):
     typing_event_json = {"id": 1, "type": "typing", "channel": channel}
-
-    latest_image = get_latest_image("raw")
     slack_client.server.send_to_websocket(typing_event_json)
+
+
+def handle_photo_command(command, channel):
+    latest_image = get_latest_image("raw")
+    __send_typing_event(channel)
     with open(latest_image, "rb") as file_content:
         slack_client.api_call(
             "files.upload",
