@@ -49,7 +49,8 @@ while True:
 
         pather = os.path.join("{}/raw".format(os.getenv("DATA_DIR")), file_out)
         out_pather = os.path.join("{}/processed".format(os.getenv("DATA_DIR")), file_out)
-        num = find_bottles(pather, out_pather)
+        centroids_out = os.path.join("{}/inventory".format(os.getenv("DATA_DIR")), "{}.txt".format(tstamp))
+        num = find_bottles(pather, out_pather, centroids_out)
 
         # build inventory data/inventory
         print('updating inventory at {} with {} bottles'.format(tstamp, num))

@@ -8,7 +8,7 @@ from skimage.measure import label, regionprops
 from skimage.morphology import binary_closing, disk, remove_small_holes
 
 
-def find_bottles(input_im, output_im):
+def find_bottles(input_im, output_im, centroids_out):
 
     # load image
     with Image.open(input_im, 'r').convert('L') as src:
@@ -57,6 +57,11 @@ def find_bottles(input_im, output_im):
 
     plt.tight_layout()
     fig.savefig(output_im, dpi=250)
+
+    # write out the positions of each bottle
+    with open(centroids_out, 'w') as src:
+        for c in centers:
+            src.write('{},{}\n'.format(c[1], c[0]))
 
     return len(centers)
 
