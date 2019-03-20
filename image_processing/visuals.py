@@ -31,7 +31,7 @@ def show_results(output_im):
     ax = plt.Axes(fig, [0.0, 0.0, 1.0, 1.0])
     fig.add_axes(ax)
 
-    ax.imshow(image, clip_limit=0.03, cmap="gray", alpha=0.6)
+    ax.imshow(image, cmap="gray", alpha=0.6)
     ax.set_axis_off()
 
     sc = ax.scatter(
