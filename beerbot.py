@@ -111,7 +111,7 @@ if slack_client.rtm_connect(with_team_state=False):
                     "files.upload",
                     channels=CHANNEL,
                     file=file_content,
-                    title="Inventory",
+                    title="Inventory: {}".format(num),
                 )
 
         time.sleep(2)
