@@ -112,5 +112,3 @@ def update_inventory():
     __store_inventory(new_inventory)
     return new_inventory
 
-
-update_inventory()
