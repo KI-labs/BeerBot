@@ -5,7 +5,7 @@ from PIL import Image
 from skimage import exposure
 from skimage.filters import threshold_otsu
 from skimage.measure import label, regionprops
-from skimage.morphology import binary_closing, disk, remove_small_holes
+from skimage.morphology import binary_closing, binary_erosion, disk, remove_small_holes
 
 
 def find_bottles(input_im, output_im, centroids_out):
@@ -21,7 +21,6 @@ def find_bottles(input_im, output_im, centroids_out):
     thresh = threshold_otsu(image)
 
     # convert to binary + cleanup
-    thresh = threshold_otsu(image)
     bw = binary_erosion(image > thresh * 0.6, selem=disk(2))
     bw = binary_dilation(bw, selem=disk(5))
     bw = remove_small_holes(bw, area_threshold=min_size)
