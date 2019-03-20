@@ -4,7 +4,7 @@ import time
 from picamera import PiCamera
 
 
-def take_picture(template=False, q='high', out_dir='../data/raw', out_fmt='png', bw=False, sleep_time=0.2):
+def take_picture(filename=None, q='high', out_dir='../data/raw', out_fmt='jpg', bw=False, sleep_time=0.2):
 
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
@@ -28,10 +28,8 @@ def take_picture(template=False, q='high', out_dir='../data/raw', out_fmt='png',
         if bw:
             camera.color_effects = (128, 128)
 
-        if not template:
-            namer = '{}.{}'.format(round(time.time()), out_fmt)
-        else:
-            namer = 'template.{}'.format(out_fmt)
+        namer = filename if filename else round(time.time())
+        namer = '{}.{}'.format(namer, out_fmt)
         camera.capture(os.path.join(out_dir, namer), format=out_fmt)
         camera.close()
 
@@ -41,7 +39,3 @@ def take_picture(template=False, q='high', out_dir='../data/raw', out_fmt='png',
 def update_inventory(inventory_file, tstamp, num):
     with open(inventory_file, 'a+') as out:
         out.write('{},{}\n'.format(tstamp, num))
-
-
-if __name__ == "__main__":
-    take_picture()
