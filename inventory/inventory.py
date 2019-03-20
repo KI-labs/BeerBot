@@ -19,6 +19,7 @@ def get_current_inventory():
 
 
 def __get_inventory_update_files():
+    print(os.getenv("DATA_DIR"))
     path = "{}/inventory".format(os.getenv("DATA_DIR"))
     return [os.path.join(path, basename) for basename in os.listdir(path)]
 

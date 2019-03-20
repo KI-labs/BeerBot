@@ -6,7 +6,7 @@ from skimage import exposure
 from skimage.filters import threshold_otsu
 from skimage.measure import label, regionprops
 from skimage.morphology import binary_dilation, binary_erosion, disk, remove_small_holes
-from ..inventory.inventory import update_inventory
+from inventory.inventory import update_inventory
 
 
 def find_bottles(input_im, output_im, centroids_out, debug=False):
