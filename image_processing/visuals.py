@@ -2,7 +2,7 @@ import json
 import time
 import matplotlib.pyplot as plt
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageEnhance
 from skimage import exposure
 from inventory.inventory import get_current_inventory
 from util.file_utils import build_image_path
@@ -22,8 +22,9 @@ def show_results(output_im):
         age.append(float(d["age"]) + curr - tstamp)
 
     # load image
-    with Image.open(input_im, "r").convert("L") as src:
-        image = np.asarray(src)
+    img = Image.open(input_im, "r").convert("L")
+    img = ImageEnhance.Brightness(img).enhance(4)
+    image = np.asarray(img)
 
     # create output image
     fig = plt.figure(frameon=False)
@@ -31,7 +32,7 @@ def show_results(output_im):
     ax = plt.Axes(fig, [0.0, 0.0, 1.0, 1.0])
     fig.add_axes(ax)
 
-    ax.imshow(image, cmap="gray", alpha=0.6)
+    ax.imshow(image, cmap="gray", alpha=0.7)
     ax.set_axis_off()
 
     sc = ax.scatter(
