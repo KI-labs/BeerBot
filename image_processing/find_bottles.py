@@ -5,11 +5,10 @@ from PIL import Image
 from skimage import exposure
 from skimage.filters import threshold_otsu
 from skimage.measure import label, regionprops
-from skimage.morphology import binary_closing, binary_erosion, disk, remove_small_holes
+from skimage.morphology import binary_dilation, binary_erosion, disk, remove_small_holes
 
 
 def find_bottles(input_im, output_im, centroids_out):
-
     # load image
     with Image.open(input_im, 'r').convert('L') as src:
         image = np.asarray(src)
@@ -62,4 +61,3 @@ def find_bottles(input_im, output_im, centroids_out):
             src.write('{},{}\n'.format(c[1], c[0]))
 
     return len(centers)
-
