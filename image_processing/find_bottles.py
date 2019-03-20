@@ -32,7 +32,7 @@ def find_bottles(input_im, output_im, centroids_out):
     for region in regionprops(label_image):
         if region.area > min_size and region.perimeter > 0:
             m = np.divide(4 * np.pi * region.area, np.power(region.perimeter, 2))
-            if m > 0.6 and region.solidity > 0.925 and region.extent > 0.7:
+            if m > 0.6 and region.solidity > 0.925 and region.extent > 0.65:
                 minr, minc, maxr, maxc = region.bbox
                 bounds.append([minc, minr, maxc - minc, maxr - minr])
                 centers.append(region.centroid)
