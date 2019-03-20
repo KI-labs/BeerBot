@@ -17,9 +17,8 @@ beerbot_id = None
 
 # constants
 RTM_READ_DELAY = 10  # 1 second delay between reading from RTM
-THRESHOLD = 3
-CHANNEL = "UCL1VMX6D"
-# CHANNEL = "beerbot-notifications"
+THRESHOLD = 11
+CHANNEL = "beerbot-notifications"
 
 if __name__ == "__main__":
     if slack_client.rtm_connect(with_team_state=False):

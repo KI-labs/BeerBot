@@ -20,7 +20,7 @@ beerbot_id = None
 RTM_READ_DELAY = 1  # 1 second delay between reading from RTM
 MENTION_REGEX = "^<@(|[WU].+?)>(.*)"
 
-COLD_IMAGE_PATH = "{}/cold.png".format(os.getenv("DATA_DIR"))
+COLD_IMAGE_PATH = "{}/cold.jpg".format(os.getenv("DATA_DIR"))
 
 
 def parse_bot_commands(slack_events):
@@ -77,11 +77,18 @@ def __generate_new_cold_image():
 
 
 def handle_photo_command(command, channel):
-    latest_image = __generate_new_cold_image()
     __send_typing_event(channel)
+    latest_image = __generate_new_cold_image()
+    current_inventory = get_current_inventory()
+    current_count = 0
+    if current_inventory:
+       _, current_count = current_inventory
     with open(latest_image, "rb") as file_content:
         slack_client.api_call(
-            "files.upload", channels=channel, file=file_content, title="Inventory"
+            "files.upload",
+            channels=channel,
+            file=file_content,
+            title="Bottles: {}".format(current_count),
         )
 
 

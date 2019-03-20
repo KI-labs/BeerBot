@@ -2,7 +2,7 @@ import json
 import time
 import matplotlib.pyplot as plt
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageEnhance
 from skimage import exposure
 from inventory.inventory import get_current_inventory
 from util.file_utils import build_image_path
@@ -22,8 +22,9 @@ def show_results(output_im):
         age.append(float(d["age"]) + curr - tstamp)
 
     # load image
-    with Image.open(input_im, "r").convert("L") as src:
-        image = np.asarray(src)
+    img = Image.open(input_im, "r").convert("L")
+    img = ImageEnhance.Brightness(img).enhance(4)
+    image = np.asarray(img)
 
     # create output image
     fig = plt.figure(frameon=False)
@@ -31,11 +32,11 @@ def show_results(output_im):
     ax = plt.Axes(fig, [0.0, 0.0, 1.0, 1.0])
     fig.add_axes(ax)
 
-    ax.imshow(image, cmap="gray", alpha=0.6)
+    ax.imshow(image, cmap="gray", alpha=0.7)
     ax.set_axis_off()
 
     sc = ax.scatter(
-        x, y, c=age, s=300, vmin=0, vmax=3600, cmap="Blues"
+        x, y, c=age, linewidths=2, edgecolors="k", s=300, vmin=0, vmax=3600, cmap="Blues"
     )  # fixed on one hour
 
     cax = fig.add_axes([0.27, 0.075, 0.5, 0.05])
@@ -43,7 +44,7 @@ def show_results(output_im):
     cb1.set_label("Beer Coldness", fontsize=16)
 
     plt.tight_layout()
-    fig.savefig(output_im, dpi=250)
+    fig.savefig(output_im, dpi=150)
 
     return True
 

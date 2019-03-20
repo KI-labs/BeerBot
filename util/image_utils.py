@@ -20,6 +20,10 @@ def run_cmd(cmd):
     return exitcode, err, out
 
 
-def compare_images(image1, image2):
-    exitcode, err, out = run_cmd('compare -metric RMSE {} {} /dev/null'.format(image1, image2))
-    return float(str(out).split(' ')[-1].replace('(', '').replace(')', '').replace('\'', ''))
+def is_door_open(template, im):
+    exitcode, err, out = run_cmd('compare -metric RMSE {} {} /dev/null'.format(template, im))
+    pct = float(str(out).split(' ')[-1].replace('(', '').replace(')', '').replace('\'', ''))
+
+    print(pct)
+
+    return pct > 0.05
