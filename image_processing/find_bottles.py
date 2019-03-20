@@ -15,14 +15,15 @@ def find_bottles(input_im, output_im, centroids_out):
         image = np.asarray(src)
 
     # define image processing parameters
-    selem = disk(15)
     min_size = 5000
 
     # threshold image (OTSU)
     thresh = threshold_otsu(image)
 
     # convert to binary + cleanup
-    bw = binary_closing(image > thresh * 0.8, selem=selem)
+    thresh = threshold_otsu(image)
+    bw = binary_erosion(image > thresh * 0.6, selem=disk(2))
+    bw = binary_dilation(bw, selem=disk(5))
     bw = remove_small_holes(bw, area_threshold=min_size)
 
     # label image regions
@@ -30,15 +31,13 @@ def find_bottles(input_im, output_im, centroids_out):
 
     bounds = []
     centers = []
-    bottles = np.zeros(label_image.shape)
     for region in regionprops(label_image):
-        m = 4 * np.pi * region.area / np.power(region.perimeter, 2)
-        if region.area > 750 and m > 0.7:
-            bottles[label_image == region.label] = 1
-
-            minr, minc, maxr, maxc = region.bbox
-            bounds.append([minc, minr, maxc - minc, maxr - minr])
-            centers.append(region.centroid)
+        if region.area > min_size and region.perimeter > 0:
+            m = np.divide(4 * np.pi * region.area, np.power(region.perimeter, 2))
+            if m > 0.6 and region.solidity > 0.925 and region.extent > 0.7:
+                minr, minc, maxr, maxc = region.bbox
+                bounds.append([minc, minr, maxc - minc, maxr - minr])
+                centers.append(region.centroid)
 
     # create ouput image
     fig = plt.figure(frameon=False)

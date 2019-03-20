@@ -5,6 +5,7 @@ from picamera import PiCamera
 
 
 def take_picture(template=False, q='high', out_dir='../data/raw', out_fmt='png', bw=False, sleep_time=0.2):
+
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
 
