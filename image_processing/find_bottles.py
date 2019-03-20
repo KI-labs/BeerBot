@@ -6,9 +6,10 @@ from skimage import exposure
 from skimage.filters import threshold_otsu
 from skimage.measure import label, regionprops
 from skimage.morphology import binary_dilation, binary_erosion, disk, remove_small_holes
+from ..inventory.inventory import update_inventory
 
 
-def find_bottles(input_im, output_im, centroids_out):
+def find_bottles(input_im, output_im, centroids_out, debug=False):
     # load image
     with Image.open(input_im, 'r').convert('L') as src:
         image = np.asarray(src)
@@ -37,27 +38,30 @@ def find_bottles(input_im, output_im, centroids_out):
                 bounds.append([minc, minr, maxc - minc, maxr - minr])
                 centers.append(region.centroid)
 
-    # create ouput image
-    fig = plt.figure(frameon=False)
-    ax = plt.Axes(fig, [0., 0., 1., 1.])
-    fig.add_axes(ax)
+    if debug:
+        # create ouput image
+        fig = plt.figure(frameon=False)
+        ax = plt.Axes(fig, [0., 0., 1., 1.])
+        fig.add_axes(ax)
 
-    ax.imshow(exposure.equalize_adapthist(image, clip_limit=0.03), cmap='gray', alpha=0.6)
-    ax.set_axis_off()
-    for b in bounds:
-        rect = mpatches.Rectangle((b[0], b[1]), b[2], b[3],
-                                  fill=False, edgecolor='red', linewidth=2)
-        ax.add_patch(rect)
+        ax.imshow(exposure.equalize_adapthist(image, clip_limit=0.03), cmap='gray', alpha=0.6)
+        ax.set_axis_off()
+        for b in bounds:
+            rect = mpatches.Rectangle((b[0], b[1]), b[2], b[3],
+                                      fill=False, edgecolor='red', linewidth=2)
+            ax.add_patch(rect)
 
-    for c in centers:
-        ax.plot(c[1], c[0], 'ro')
+        for c in centers:
+            ax.plot(c[1], c[0], 'ro')
 
-    plt.tight_layout()
-    fig.savefig(output_im, dpi=250)
+        plt.tight_layout()
+        fig.savefig(output_im, dpi=250)
 
     # write out the positions of each bottle
     with open(centroids_out, 'w') as src:
         for c in centers:
             src.write('{},{}\n'.format(c[1], c[0]))
+
+    update_inventory()
 
     return len(centers)
