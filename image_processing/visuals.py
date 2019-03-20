@@ -43,7 +43,7 @@ def show_results(output_im):
     cb1.set_label("Beer Coldness", fontsize=16)
 
     plt.tight_layout()
-    fig.savefig(output_im, dpi=250)
+    fig.savefig(output_im, dpi=150)
 
     return True
 
