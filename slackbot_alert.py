@@ -17,7 +17,7 @@ beerbot_id = None
 
 # constants
 RTM_READ_DELAY = 10  # 1 second delay between reading from RTM
-THRESHOLD = 7
+THRESHOLD = 11
 CHANNEL = "beerbot-notifications"
 
 if __name__ == "__main__":

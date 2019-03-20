@@ -79,9 +79,16 @@ def __generate_new_cold_image():
 def handle_photo_command(command, channel):
     __send_typing_event(channel)
     latest_image = __generate_new_cold_image()
+    current_inventory = get_current_inventory()
+
     with open(latest_image, "rb") as file_content:
         slack_client.api_call(
-            "files.upload", channels=channel, file=file_content, title="Inventory"
+            "files.upload",
+            channels=channel,
+            file=file_content,
+            title="Bottles: {}".format(
+                current_inventory[1] if not current_inventory else 0
+            ),
         )
 
 
