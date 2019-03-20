@@ -6,7 +6,8 @@ from datetime import datetime as dt
 from dotenv import load_dotenv
 from slackclient import SlackClient
 
-from util.file_utils import get_latest_image, get_current_inventory
+from image_processing.visuals import show_results
+from util.file_utils import get_current_inventory, get_latest_image
 
 load_dotenv()
 
@@ -18,6 +19,8 @@ beerbot_id = None
 # constants
 RTM_READ_DELAY = 1  # 1 second delay between reading from RTM
 MENTION_REGEX = "^<@(|[WU].+?)>(.*)"
+
+COLD_IMAGE_PATH = "{}/cold.png".format(os.getenv("DATA_DIR"))
 
 
 def parse_bot_commands(slack_events):
@@ -68,15 +71,17 @@ def __send_typing_event(channel):
     slack_client.server.send_to_websocket(typing_event_json)
 
 
+def __generate_new_cold_image():
+    show_results(COLD_IMAGE_PATH)
+    return COLD_IMAGE_PATH
+
+
 def handle_photo_command(command, channel):
-    latest_image = get_latest_image("raw")
+    latest_image = __generate_new_cold_image()
     __send_typing_event(channel)
     with open(latest_image, "rb") as file_content:
         slack_client.api_call(
-            "files.upload",
-            channels=channel,
-            file=file_content,
-            title="Current contents",
+            "files.upload", channels=channel, file=file_content, title="Inventory"
         )
 
 

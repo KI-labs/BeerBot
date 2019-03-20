@@ -8,6 +8,10 @@ def get_images(source):
     return [os.path.join(path, basename) for basename in os.listdir(path)]
 
 
+def build_image_path(source, timestamp, extension="png"):
+    return "{}/{}/{}.{}".format(os.getenv("DATA_DIR"), source, timestamp, extension)
+
+
 def get_latest_image(source):
     paths = get_images(source)
     latest_file = max(paths, key=os.path.getctime)
