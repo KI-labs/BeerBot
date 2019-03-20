@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 
 from image_processing.find_bottles import find_bottles
 from image_processing.utils import take_picture, update_inventory
+from image_processing.visuals import show_results
 from util.image_utils import is_door_open
 from slackclient import SlackClient
 
@@ -17,6 +18,8 @@ prev_door_state = "open"
 slack_client = SlackClient(os.environ.get("SLACK_BOT_OAUTH_TOKEN"))
 
 CHANNEL = "beerbot-notifications"
+COLD_IMAGE_PATH = "{}/cold.jpg".format(os.getenv("DATA_DIR"))
+
 
 
 def __send_typing_event(channel):
@@ -111,7 +114,7 @@ if slack_client.rtm_connect(with_team_state=False):
                     "files.upload",
                     channels=CHANNEL,
                     file=file_content,
-                    title="Inventory: {}".format(num),
+                    title="Bottles: {}".format(num),
                 )
 
         time.sleep(2)

@@ -3,7 +3,7 @@ import os
 
 from shapely.geometry import Point
 
-DISTANCE_THRESHOLD = 1
+DISTANCE_THRESHOLD = 50
 
 
 def __inventory_details_path():
