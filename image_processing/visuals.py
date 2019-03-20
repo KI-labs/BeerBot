@@ -36,7 +36,7 @@ def show_results(output_im):
     ax.set_axis_off()
 
     sc = ax.scatter(
-        x, y, c=age, s=300, vmin=0, vmax=3600, cmap="Blues"
+        x, y, c=age, linewidths=2, edgecolors="k", s=300, vmin=0, vmax=3600, cmap="Blues"
     )  # fixed on one hour
 
     cax = fig.add_axes([0.27, 0.075, 0.5, 0.05])
