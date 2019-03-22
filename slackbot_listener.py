@@ -3,13 +3,18 @@ import re
 import time
 from datetime import datetime as dt
 
+from dateutil import tz
 from dotenv import load_dotenv
 from slackclient import SlackClient
 
-from image_processing.visuals import show_results
-from util.file_utils import get_current_inventory, get_latest_image
+from analysis.file_utils import get_current_inventory
+from analysis.visuals import show_results
 
 load_dotenv()
+
+# deal with timezones
+from_zone = tz.tzutc()
+to_zone = tz.gettz('Europe/Berlin')
 
 # instantiate Slack client
 slack_client = SlackClient(os.environ.get("SLACK_BOT_OAUTH_TOKEN"))
@@ -51,8 +56,11 @@ def __message_for_inventory(inventory):
     if not inventory:
         return "I don't know yet what we have in stock"
     timestamp, count = inventory
+    timestamp = time.mktime(timestamp)
+    out = dt.utcfromtimestamp(timestamp).replace(tzinfo=from_zone).astimezone(to_zone).strftime("%d.%m.%y %H:%M")
+    print(timestamp)
     return "As of {} there are {} bottles in the fridge".format(
-        time.strftime("%d.%m.%y %H:%M", timestamp), count
+        out, count
     )
 
 
@@ -82,7 +90,7 @@ def handle_photo_command(command, channel):
     current_inventory = get_current_inventory()
     current_count = 0
     if current_inventory:
-       _, current_count = current_inventory
+        _, current_count = current_inventory
     with open(latest_image, "rb") as file_content:
         slack_client.api_call(
             "files.upload",

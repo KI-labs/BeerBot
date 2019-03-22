@@ -1,7 +1,7 @@
 import json
 import os
 
-from shapely.geometry import Point
+from shapely.geometry import Polygon, Point
 
 DISTANCE_THRESHOLD = 50
 
@@ -19,9 +19,8 @@ def get_current_inventory():
 
 
 def __get_inventory_update_files():
-    print(os.getenv("DATA_DIR"))
     path = "{}/inventory".format(os.getenv("DATA_DIR"))
-    return [os.path.join(path, basename) for basename in os.listdir(path)]
+    return [os.path.join(path, basename) for basename in os.listdir(path) if basename.endswith('.json')]
 
 
 def __get_latest_inventory_update():
@@ -32,14 +31,9 @@ def __get_latest_inventory_update():
     return latest_file
 
 
-def __process_update_line(line):
-    x, y = line.split(",")
-    return {"x": x, "y": y}
-
-
 def __bottle_positions(inventory_update_file):
-    with open(inventory_update_file, "r") as f:
-        return list(map(__process_update_line, f.read().splitlines()))
+    with open(inventory_update_file, 'r') as src:
+        return json.load(src)
 
 
 def __file_name(file_path):
@@ -47,15 +41,17 @@ def __file_name(file_path):
 
 
 def __point_from_bottle(bottle):
-    return Point(float(bottle["x"]), float(bottle["y"]))
+    return Polygon(bottle).centroid.coords[:]
 
 
 def __find_match(bottle, old_bottles):
     bottle_point = __point_from_bottle(bottle)
+
     print("Trying to find match for {}".format(bottle_point))
     for idx, old_bottle in enumerate(old_bottles):
+        old_bottle = old_bottle['contour']
         old_bottle_point = __point_from_bottle(old_bottle)
-        distance = bottle_point.distance(old_bottle_point)
+        distance = Point(bottle_point).distance(Point(old_bottle_point))
         if distance < DISTANCE_THRESHOLD:
             print("{} {} => MATCH".format(old_bottle_point, distance))
             return old_bottle, idx
@@ -65,9 +61,7 @@ def __find_match(bottle, old_bottles):
     return None, -1
 
 
-def __process_inventory_update(
-    current_inventory, latest_update_timestamp, new_bottle_positions
-):
+def __process_inventory_update(current_inventory, latest_update_timestamp, new_bottle_positions):
     new_inventory = {"timestamp": latest_update_timestamp, "bottles": []}
     secs_since_last_update = (
         (int(latest_update_timestamp) - int(current_inventory["timestamp"]))
@@ -75,14 +69,15 @@ def __process_inventory_update(
         else 0
     )
     current_inventory_bottles = current_inventory.get("bottles", [])
-    for new_bottle in new_bottle_positions:
+
+    for new_bottle in new_bottle_positions.values():
         match, match_pos = __find_match(new_bottle, current_inventory_bottles)
         if match:
+            age = current_inventory_bottles[match_pos]['age']
             del current_inventory_bottles[match_pos]
         new_inventory_record = {
-            "x": new_bottle["x"],
-            "y": new_bottle["y"],
-            "age": 0 if not match else match["age"] + secs_since_last_update,
+            "contour": new_bottle,
+            "age": 0 if not match else age + secs_since_last_update,
         }
         new_inventory["bottles"].append(new_inventory_record)
     return new_inventory
@@ -97,19 +92,16 @@ def update_inventory():
     current_inventory = get_current_inventory()
     current_inventory_timestamp = current_inventory.get("timestamp")
     latest_update_file = __get_latest_inventory_update()
+
     if not latest_update_file:
         return
-
     latest_update_timestamp = __file_name(latest_update_file)
 
     if current_inventory_timestamp == latest_update_timestamp:
         return current_inventory
-
     new_bottle_positions = __bottle_positions(latest_update_file)
     new_inventory = __process_inventory_update(
         current_inventory, latest_update_timestamp, new_bottle_positions
     )
-
     __store_inventory(new_inventory)
     return new_inventory
-

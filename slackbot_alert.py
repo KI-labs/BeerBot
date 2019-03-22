@@ -1,12 +1,10 @@
 import os
-import re
 import time
-from datetime import datetime as dt
 
 from dotenv import load_dotenv
 from slackclient import SlackClient
 
-from util.file_utils import get_latest_image, get_current_inventory
+from analysis.file_utils import get_current_inventory
 
 load_dotenv()
 
@@ -17,7 +15,7 @@ beerbot_id = None
 
 # constants
 RTM_READ_DELAY = 10  # 1 second delay between reading from RTM
-THRESHOLD = 12
+THRESHOLD = 5
 CHANNEL = "beerbot-notifications"
 
 if __name__ == "__main__":
@@ -29,6 +27,7 @@ if __name__ == "__main__":
             current_inventory = get_current_inventory()
             if current_inventory:
                 _timestamp, count = current_inventory
+                print(_timestamp, count)
                 if count < THRESHOLD:
                     slack_client.api_call(
                         "chat.postMessage",

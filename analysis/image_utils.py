@@ -4,7 +4,7 @@ from subprocess import Popen, PIPE
 
 def run_cmd(cmd):
     """
-    Basic function for running a subprocess call and returning response
+    Function for running a subprocess call and returning response
     Args:
         cmd (str): shell command to execute
     Returns:
