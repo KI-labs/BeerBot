@@ -1,0 +1,3 @@
+SLACK_OAUTH_TOKEN=
+SLACK_BOT_OAUTH_TOKEN=
+DATA_DIR="/home/pi/BeerBot/data"

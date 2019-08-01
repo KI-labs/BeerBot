@@ -17,3 +17,34 @@ BeerBot is a slackbot capable of the following:
 # Processing Pipeline
 
 ![alt text](assets/BeerBot.png "Pipeline")
+
+# Installation 
+
+PlantBot can be installed by cloning this repo and its python requirements.
+
+```bash
+$ pip3 install -r requirements.txt
+```
+
+# Configuration
+
+Minimal configuration with a `.envrc` file based on `.envrc.template` is required in order to link with Slack.
+
+- build a [slackbot](https://api.slack.com/bot-users)
+
+```text
+SLACK_OAUTH_TOKEN=
+SLACK_BOT_OAUTH_TOKEN=
+DATA_DIR="/home/pi/BeerBot/data"
+```
+
+# Deployment
+
+There are two scripts for running the BeerBot engine.
+
+- `./slackbot_alert.py`
+  - responsible for alerting when beer supply is critically low
+- `./slackbot_listener.py`
+  - responsible for listening to when users want beer supply or coldness information
+
+These processes are deployed with supervisor in `./supervisor/*.conf`, see [this](http://supervisord.org/installing.html) for installation and setup.
