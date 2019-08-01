@@ -1,4 +1,5 @@
 # BeerBot
+[![GitHub license](https://img.shields.io/badge/license-mit-green.svg)](https://github.com/KI-labs/BeerBot/master/LICENSE)
 
 This repository is the central location for all things related to the beloved **BeerBot**.
 
