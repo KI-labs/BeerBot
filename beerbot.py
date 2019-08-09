@@ -20,6 +20,9 @@ prev_door_state = "open"
 slack_client = SlackClient(os.environ.get("SLACK_BOT_OAUTH_TOKEN"))
 
 CHANNEL = "beerbot-notifications"
+
+if not os.path.exists(os.getenv("DATA_DIR")):
+        os.makedirs(os.getenv("DATA_DIR"))
 COLD_IMAGE_PATH = "{}/cold.jpg".format(os.getenv("DATA_DIR"))
 
 

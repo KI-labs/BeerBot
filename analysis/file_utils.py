@@ -27,6 +27,8 @@ def get_latest_images(source, num_images):
 
 def get_current_inventory():
     path = "{}/inventory.txt".format(os.getenv("DATA_DIR"))
+    if not os.path.exists(path):
+        open(path, 'a').close()
     with open(path, "r") as f:
         lines = f.read().splitlines()
         if not lines:
