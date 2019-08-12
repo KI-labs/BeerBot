@@ -17,6 +17,7 @@ load_dotenv()
 DATA_DIR = os.environ.get("DATA_DIR")
 CHANNEL = os.environ.get("CHANNEL")
 SLACK_BOT_OATH_TOKEN = os.environ.get("SLACK_BOT_OAUTH_TOKEN")
+ENDPOINT = os.environ.get("ENDPOINT")
 
 # initialize inventory, state and slack client
 update_positions()
@@ -70,9 +71,11 @@ if __name__ == "__main__":
 
                 # find bottles save to data/processed
                 print("finding bottles {}".format(tstamp))
-                pather = os.path.join(DATA_DIR, "raw", file_out)
+                input_im = os.path.join(DATA_DIR, "raw", file_out)
+                response_out = os.path.join(DATA_DIR, "response", "{}.json".format(tstamp))
+                mask_out = os.path.join(DATA_DIR, "mask", "{}.png".format(tstamp))
                 contours_out = os.path.join(DATA_DIR, "inventory", "{}.json".format(tstamp))
-                num = find_bottles(pather, contours_out)
+                num = find_bottles(ENDPOINT, input_im, response_out, mask_out, contours_out)
 
                 # build inventory data/inventory
                 print("updating inventory at {} with {} bottles".format(tstamp, num))

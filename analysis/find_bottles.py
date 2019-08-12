@@ -1,74 +1,109 @@
 # required imports
+def warn(*args, **kwargs):
+    pass
+
+
+import warnings
+
+warnings.warn = warn
+
 import json
-import numpy as np
 from PIL import Image, ImageEnhance
+import numpy as np
+import requests
+from skimage import exposure, filters, morphology, measure
 from scipy import ndimage
-from skimage import segmentation, measure
-from skimage.filters import threshold_otsu
-from skimage.morphology import binary_erosion, binary_dilation, disk
 
 from analysis.inventory import update_inventory
 
 
-def adjust_bounds(x0, y0, x1, y1, im=None, fac=0):
-    x0 = min(max(x0 - fac, 0), im.shape[0])
-    x1 = min(max(x1 + fac, 0), im.shape[0])
-    y0 = min(max(y0 - fac, 0), im.shape[1])
-    y1 = min(max(y1 + fac, 0), im.shape[1])
+def predict(url, input_im, response_out, conf=0.8, nms=0.2):
+    r = requests.post(url, data=open(input_im, 'rb').read(), params={"conf": conf, "nms": nms})
+    with open(response_out, 'w') as dst:
+        json.dump(r.json(), dst, indent=2, default=str)
 
+
+def __load_predictions(input_response):
+    with open(input_response, 'r') as src:
+        return json.load(src)
+
+
+def __load_mask(input_mask):
+    mask = Image.open(input_mask, 'r')
+    return np.asarray(mask)
+
+
+def __load_image(input_im):
+    img = Image.open(input_im, 'r').convert('RGB')
+    img = ImageEnhance.Brightness(img).enhance(2.5)
+    return np.asarray(img)
+
+
+def adjust_bounds(bounds, image_shape, fac=0):
+    x0, y0, x1, y1 = bounds
+    x0 = min(max(x0 - fac, 0), image_shape[0])
+    x1 = min(max(x1 + fac, 0), image_shape[0])
+    y0 = min(max(y0 - fac, 0), image_shape[1])
+    y1 = min(max(y1 + fac, 0), image_shape[1])
     return x0, y0, x1, y1
 
 
-def threshold_image(image, fac=0.7):
-    thresh = threshold_otsu(image)
-    bw = binary_erosion(image > thresh * fac, selem=disk(2))
-    bw = binary_dilation(bw, selem=disk(5))
+def threshold_image(image, min_area):
+    thresh = filters.threshold_otsu(image)
+    bw = image > thresh
+    bw = morphology.binary_dilation(bw, selem=morphology.disk(1))
+    bw = morphology.remove_small_objects(bw, min_size=min_area)
     bw = ndimage.binary_fill_holes(bw).astype(int)
-
     return bw
 
 
-# calculate distance between all bottles
-def _check_erroneous_bottles(centers):
-    x = np.array(centers)
-    subs = x[:, None] - x
-    sq_euclidean_dist = np.einsum('ijk,ijk->ij', subs, subs)
-    euclidean_dist = np.sqrt(sq_euclidean_dist)
+def identify_bottles(input_im, response_out, output_mask, fac=10, min_area=1000, ecc_thresh=0.75, m_thresh=0.95):
+    response = __load_predictions(response_out)
+    img = __load_image(input_im)
 
-    # get the "minimum" distance between all bottles
-    minner = [np.min(e[e > 0]) for e in euclidean_dist]
+    img_size = img.shape[:2]
+    mask = np.zeros(img_size, dtype=np.int)
 
-    # calculate the z-score
-    z = abs((minner - np.mean(minner)) / np.std(minner))
+    for ind, r in enumerate(response):
 
-    # proceed to remove a bottle
-    if any(z > 2):
+        bounds = [int(r["x1"]), int(r["y1"]), int(r["x2"]), int(r["y2"])]
 
-        print('erroneous caps exist!')
+        # load portion of image
+        img = Image.open(input_im, 'r').convert('L')
+        x1, y1, x2, y2 = adjust_bounds(bounds, img_size, fac)
+        img = img.crop([x1, y1, x2, y2])
+        region = np.asarray(img)
 
-        # get minimum distance
-        min_dist = np.min(euclidean_dist[np.nonzero(euclidean_dist)])
-        inds = np.where(euclidean_dist == min_dist)[0]
+        # image processing
+        region = exposure.equalize_hist(region)
+        region = filters.gaussian(region, 2.5)
 
-        # determine which to remove (based on next closest distance)
-        dist = []
-        for ind in inds:
-            temp = euclidean_dist[ind]
-            dist.append(np.min(temp[temp > min_dist]))
+        # get binary mask
+        bw = threshold_image(region, min_area)
+        labels = measure.label(bw)
 
-        # remove incorrect detection
-        return inds[np.argmin(dist)]
+        # investigate subregions
+        for label in measure.regionprops(labels):
 
-    else:
+            # simple metric for a circle
+            m = label.filled_area / label.convex_area
+            if label.area > min_area and label.eccentricity < ecc_thresh and m > m_thresh:
+                labels[labels == label.label] = 1
+            else:
+                labels[labels == label.label] = 0
 
-        return None
+        # if labels are empty
+        if sum(labels.flatten()) == 0:
+            labels[:] = 1
+        mask[y1:y2, x1:x2] += labels
+
+    # save mask
+    Image.fromarray(np.uint8(255 * mask), 'L').save(output_mask)
 
 
-# determine contours -> number of bottle caps
-def get_contours(out):
-    raw = measure.find_contours(out, level=0.5)
-    num_caps = len(raw)
-    print(num_caps, "caps found!")
+def contour_bottles(input_mask, contours_out):
+    mask = __load_mask(input_mask)
+    raw = measure.find_contours(mask, level=0.5)
 
     contours = []
     centers = []
@@ -83,90 +118,12 @@ def get_contours(out):
         cy = np.mean(y)
         centers.append([cx, cy])
 
-    ind = _check_erroneous_bottles(centers)
-    if ind:
-        contours.pop(ind)
-
-    return contours
+    # save to file
+    save_contours(contours, contours_out)
+    return len(contours)
 
 
-def find_bottles(input_im, contours_out):
-    # convert to grayscale + add brightness
-    img = Image.open(input_im, 'r').convert('L')
-    img = ImageEnhance.Brightness(img).enhance(3)
-    image = np.asarray(img)
-
-    # apply threshold
-    area_limits = [5000, 25000]
-    subarea_limit = 1000
-    n_segments = 5
-    m_thresh = 0.975
-    eccentricity_thresh = 0.75
-
-    bw = threshold_image(image)
-    out = np.zeros(bw.shape, dtype=np.int)
-
-    # label image regions
-    label_image = measure.label(bw) + 1
-
-    # iterate through raster regions
-    for region in measure.regionprops(label_image):
-
-        # investigate regions if within area
-        if area_limits[0] < region.area < area_limits[1] and region.perimeter > 0:
-
-            # simple metric for a circle
-            m = region.filled_area / region.convex_area
-
-            # get masked region
-            x0, y0, x1, y1 = adjust_bounds(*region.bbox, im=label_image, fac=0)
-
-            # confident circle
-            if m > m_thresh:
-
-                out[x0:x1, y0:y1] += region.filled_image
-
-            # requires investigation
-            else:
-
-                x0, y0, x1, y1 = adjust_bounds(*region.bbox, im=label_image, fac=5)
-                mask = label_image[x0:x1, y0:y1] == region.label
-                masked_region = mask * image[x0:x1, y0:y1]
-
-                # segment masked region with superpixels
-                raw_labels = segmentation.slic(masked_region,
-                                               sigma=2.5,
-                                               compactness=0.1,
-                                               n_segments=n_segments,
-                                               multichannel=True,
-                                               enforce_connectivity=True)
-
-                # label subregion
-                sublabels = measure.label(raw_labels)
-                sublabels += 1
-                sublabels *= mask
-
-                # investigate subregions
-                for subregion in measure.regionprops(sublabels):
-
-                    # simple metric for a circle
-                    m = subregion.filled_area / subregion.convex_area
-
-                    # confident circle based on parameters
-                    if subregion.area > subarea_limit and subregion.eccentricity < eccentricity_thresh and m > m_thresh:
-                        sublabels[sublabels == subregion.label] = 1
-
-                    # remove labels
-                    else:
-                        sublabels[sublabels == subregion.label] = 0
-
-                # replace main image with sublabel filled image "part"
-                sublabels = ndimage.binary_fill_holes(sublabels).astype(int)
-                out[x0:x1, y0:y1] += sublabels
-
-    # determine contours
-    contours = get_contours(out)
-
+def save_contours(contours, contours_out):
     # format contours
     temp = {}
     for ind, c in enumerate(contours):
@@ -174,9 +131,23 @@ def find_bottles(input_im, contours_out):
 
     # dump contours to JSON file
     with open(contours_out, 'w') as dst:
-        json.dump(temp, dst)
+        json.dump(temp, dst, indent=2, default=str)
+
+
+def find_bottles(url, input_im, response_out, mask_out, contours_out):
+    # call endpoint - get bottle locations
+    print("predicting against endpoint")
+    predict(url, input_im, response_out)
+
+    # identify caps
+    print("identifying bottles")
+    identify_bottles(input_im, response_out, mask_out)
+
+    # get actual bottle contours
+    print("extracting contours from bottles")
+    n_bottles = contour_bottles(mask_out, contours_out)
 
     # update inventory with new bottles
     update_inventory()
 
-    return len(contours)
+    return n_bottles
