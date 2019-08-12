@@ -41,10 +41,10 @@ def __load_image(input_im):
 
 def adjust_bounds(bounds, image_shape, fac=0):
     x0, y0, x1, y1 = bounds
-    x0 = min(max(x0 - fac, 0), image_shape[0])
-    x1 = min(max(x1 + fac, 0), image_shape[0])
-    y0 = min(max(y0 - fac, 0), image_shape[1])
-    y1 = min(max(y1 + fac, 0), image_shape[1])
+    x0 = min(max(x0-fac, 0), image_shape[1])
+    x1 = min(max(x1+fac, 0), image_shape[1])
+    y0 = min(max(y0-fac, 0), image_shape[0])
+    y1 = min(max(y1+fac, 0), image_shape[0])
     return x0, y0, x1, y1
 
 

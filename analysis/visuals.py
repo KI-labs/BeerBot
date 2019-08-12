@@ -2,10 +2,25 @@ import time
 
 import matplotlib.pyplot as plt
 import numpy as np
-from PIL import Image, ImageEnhance
 
 from analysis.file_utils import build_image_path
+from analysis.find_bottles import __load_image
 from analysis.inventory import get_current_inventory
+
+
+def fit_ellipse(contour):
+    contour = np.array(contour)
+    mean = np.mean(contour, 0)
+    contour -= mean
+    N = len(contour[:, 0])
+
+    U, S, V = np.linalg.svd(np.stack((contour[:, 0], contour[:, 1])))
+
+    tt = np.linspace(0, 2 * np.pi, 1000)
+    circle = np.stack((np.cos(tt), np.sin(tt)))  # unit circle
+    transform = np.sqrt(2 / N) * U.dot(np.diag(S))  # transformation matrix
+    fit = transform.dot(circle) + mean[:, None]
+    return list(zip(*fit))
 
 
 def cold_photo(output_im):
@@ -26,9 +41,7 @@ def cold_photo(output_im):
         ages.append(float(d["age"]) + curr - tstamp)
 
     # convert to grayscale + add brightness
-    img = Image.open(input_im, 'r').convert('L')
-    img = ImageEnhance.Brightness(img).enhance(4)
-    image = np.asarray(img)
+    image = __load_image(input_im)
 
     # build colormap
     cmap = plt.cm.get_cmap('Blues')
@@ -47,9 +60,11 @@ def cold_photo(output_im):
     # add contours around each bottle
     for contour, age in zip(contours, ages):
         normalized_age = min(0.98, np.divide(age, max_age))
-        ax.plot(*zip(*contour), lw=5, c='k')
-        ax.plot(*zip(*contour), lw=3, c=cmap(normalized_age))
+        fit = fit_ellipse(contour)
+        ax.plot(*zip(*fit), lw=5, c='k')
+        ax.plot(*zip(*fit), lw=3, c=cmap(normalized_age))
     plt.axis('off')
+
     # add colorbar
     cax = fig.add_axes([0.27, 0.075, 0.5, 0.05])
     cb1 = fig.colorbar(CS3, cax=cax, cmap=cmap,
@@ -59,5 +74,3 @@ def cold_photo(output_im):
 
     plt.tight_layout()
     fig.savefig(output_im, dpi=200)
-
-    return None
