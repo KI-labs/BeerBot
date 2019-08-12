@@ -20,7 +20,7 @@ def get_current_inventory():
 
 def __get_inventory_update_files():
     path = "{}/inventory".format(os.getenv("DATA_DIR"))
-    if not os.path.exist(path):
+    if not os.path.isdir(path):
         os.makedirs(path)
     return [os.path.join(path, basename) for basename in os.listdir(path) if basename.endswith('.json')]
 

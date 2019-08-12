@@ -1,6 +1,6 @@
-import os
 import time
 
+import os
 from picamera import PiCamera
 
 
@@ -33,8 +33,3 @@ def take_picture(filename=None, q='high', out_dir='../data/raw', out_fmt='jpg', 
         camera.close()
 
     return namer
-
-
-def update_inventory(inventory_file, tstamp, num):
-    with open(inventory_file, 'a+') as out:
-        out.write('{},{}\n'.format(tstamp, num))

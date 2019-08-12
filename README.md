@@ -36,7 +36,12 @@ Minimal configuration with a `.envrc` file based on `.envrc.template` is require
 ```text
 SLACK_OAUTH_TOKEN=
 SLACK_BOT_OAUTH_TOKEN=
+CHANNEL=
+LISTEN_DELAY=1
+ALERT_DELAY=10
+MIN_BEER_THRESHOLD=5
 DATA_DIR="/home/pi/BeerBot/data"
+TZ="Europe/Berlin"
 ```
 
 # Deployment
