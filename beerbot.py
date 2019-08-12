@@ -26,8 +26,13 @@ prev_door_state = "open"
 slack_client = SlackClient(SLACK_BOT_OATH_TOKEN)
 
 # handle static IO
-if not os.path.exists(DATA_DIR):
-    os.makedirs(DATA_DIR)
+RESPONSE_DIR = os.path.join(DATA_DIR, "response")
+MASK_DIR = os.path.join(DATA_DIR, "mask")
+RAW_DIR = os.path.join(DATA_DIR, "raw")
+INVENTORY_DIR = os.path.join(DATA_DIR, "inventory")
+for x in [RESPONSE_DIR, MASK_DIR, RAW_DIR, INVENTORY_DIR]:
+    if not os.path.exists(x):
+        os.makedirs(x)
 COLD_IMAGE_PATH = os.path.join(DATA_DIR, "cold.jpg")
 INVENTORY_PATH = os.path.join(DATA_DIR, "inventory.txt")
 
@@ -71,10 +76,10 @@ if __name__ == "__main__":
 
                 # find bottles save to data/processed
                 print("finding bottles {}".format(tstamp))
-                input_im = os.path.join(DATA_DIR, "raw", file_out)
-                response_out = os.path.join(DATA_DIR, "response", "{}.json".format(tstamp))
-                mask_out = os.path.join(DATA_DIR, "mask", "{}.png".format(tstamp))
-                contours_out = os.path.join(DATA_DIR, "inventory", "{}.json".format(tstamp))
+                input_im = os.path.join(RAW_DIR, file_out)
+                response_out = os.path.join(RESPONSE_DIR, "{}.json".format(tstamp))
+                mask_out = os.path.join(MASK_DIR, "{}.png".format(tstamp))
+                contours_out = os.path.join(INVENTORY_DIR, "{}.json".format(tstamp))
                 num = find_bottles(ENDPOINT, input_im, response_out, mask_out, contours_out)
 
                 # build inventory data/inventory
