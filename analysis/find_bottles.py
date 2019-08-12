@@ -1,6 +1,5 @@
 # required imports
 import json
-
 import numpy as np
 from PIL import Image, ImageEnhance
 from scipy import ndimage

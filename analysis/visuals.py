@@ -8,7 +8,7 @@ from analysis.file_utils import build_image_path
 from analysis.inventory import get_current_inventory
 
 
-def show_results(output_im):
+def cold_photo(output_im):
     # find latest image
     data = get_current_inventory()
     input_im = build_image_path("raw", data["timestamp"], "png")

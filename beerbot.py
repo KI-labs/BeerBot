@@ -1,89 +1,90 @@
-import os
 import time
 
+import os
 from dotenv import load_dotenv
 from slackclient import SlackClient
 
+from analysis.file_utils import update_inventory
 from analysis.find_bottles import find_bottles
 from analysis.image_utils import is_door_open
 from analysis.inventory import update_inventory as update_positions
-from analysis.utils import take_picture, update_inventory
-from analysis.visuals import show_results
+from analysis.slack_utils import __send_typing_event
+from analysis.utils import take_picture
+from analysis.visuals import cold_photo
 
+# load ENV from .env
 load_dotenv()
-update_positions()
+DATA_DIR = os.environ.get("DATA_DIR")
+CHANNEL = os.environ.get("CHANNEL")
+SLACK_BOT_OATH_TOKEN = os.environ.get("SLACK_BOT_OAUTH_TOKEN")
 
+# initialize inventory, state and slack client
+update_positions()
 current_door_state = "closed"
 prev_door_state = "open"
+slack_client = SlackClient(SLACK_BOT_OATH_TOKEN)
 
-# instantiate Slack client
-slack_client = SlackClient(os.environ.get("SLACK_BOT_OAUTH_TOKEN"))
+# handle static IO
+if not os.path.exists(DATA_DIR):
+    os.makedirs(DATA_DIR)
+COLD_IMAGE_PATH = os.path.join(DATA_DIR, "cold.jpg")
+INVENTORY_PATH = os.path.join(DATA_DIR, "inventory.txt")
 
-CHANNEL = "beerbot-notifications"
+if __name__ == "__main__":
 
-if not os.path.exists(os.getenv("DATA_DIR")):
-        os.makedirs(os.getenv("DATA_DIR"))
-COLD_IMAGE_PATH = "{}/cold.jpg".format(os.getenv("DATA_DIR"))
+    if slack_client.rtm_connect(with_team_state=False):
+        print("BeerBot (alert) connected and running!")
 
+        # initialize by setting template
+        print("creating template")
+        template_out = take_picture(filename="template", q="low", bw=True, out_fmt="jpeg", sleep_time=0,
+                                    out_dir="{}".format(DATA_DIR))
+        template_path = os.path.join(DATA_DIR, template_out)
 
-def __send_typing_event(channel):
-    typing_event_json = {"id": 1, "type": "typing", "channel": channel}
-    slack_client.server.send_to_websocket(typing_event_json)
+        while True:
 
+            # take a low resolution image for comparison against the template
+            file_out = take_picture(filename="temp", q="low", bw=True, out_fmt="jpeg", sleep_time=0,
+                                    out_dir="{}/temp".format(DATA_DIR))
+            file_path = os.path.join(DATA_DIR, "temp", file_out)
 
-def __generate_new_cold_image():
-    show_results(COLD_IMAGE_PATH)
-    return COLD_IMAGE_PATH
+            # check state of door based on template
+            print("Checking template")
+            prev_door_state = current_door_state
+            current_door_state = ("open" if is_door_open(template_path, file_path) else "closed")
+            print("Current_door_state: {}".format(current_door_state))
+            print("Prev_door_state: {}".format(prev_door_state))
 
+            # process high resolution image
+            if current_door_state == "closed" and prev_door_state == "open":
+                print("Taking photo for analysis")
+                file_out = take_picture(q="high", out_fmt="png", sleep_time=1,
+                                        out_dir="{}/raw".format(DATA_DIR))
+                tstamp, _ = os.path.splitext(file_out)
 
-if slack_client.rtm_connect(with_team_state=False):
-    print("Slackbot alerter connected and running!")
+                # set NEW low resolution template image
+                print("Recreating template")
+                template_out = take_picture(filename="template", q="low", bw=True, out_fmt="jpeg", sleep_time=0,
+                                            out_dir="{}".format(DATA_DIR))
+                template_path = os.path.join(DATA_DIR, template_out)
 
-    # set template
-    print("creating template")
-    template_out = take_picture(filename="template", q="low", bw=True, out_fmt="jpeg", sleep_time=0,
-                                out_dir="{}".format(os.getenv("DATA_DIR")))
-    template_path = os.path.join(os.getenv("DATA_DIR"), template_out)
+                # find bottles save to data/processed
+                print("finding bottles {}".format(tstamp))
+                pather = os.path.join(DATA_DIR, "raw", file_out)
+                contours_out = os.path.join(DATA_DIR, "inventory", "{}.json".format(tstamp))
+                num = find_bottles(pather, contours_out)
 
-    while True:
-        file_out = take_picture(filename="temp", q="low", bw=True, out_fmt="jpeg", sleep_time=0,
-                                out_dir="{}/temp".format(os.getenv("DATA_DIR")))
-        file_path = os.path.join(os.getenv("DATA_DIR"), "temp", file_out)
+                # build inventory data/inventory
+                print("updating inventory at {} with {} bottles".format(tstamp, num))
+                update_inventory(INVENTORY_PATH, tstamp, num)
+                __send_typing_event(CHANNEL, slack_client)
 
-        print("Checking template")
+                # visualize NEW cold image
+                cold_photo(COLD_IMAGE_PATH)
+                with open(COLD_IMAGE_PATH, "rb") as file_content:
+                    slack_client.api_call("files.upload", channels=CHANNEL, file=file_content,
+                                          title="Bottles: {}".format(num), )
 
-        prev_door_state = current_door_state
-        current_door_state = ("open" if is_door_open(template_path, file_path) else "closed")
-        print("Current_door_state: {}".format(current_door_state))
-        print("Prev_door_state: {}".format(prev_door_state))
-
-        if current_door_state == "closed" and prev_door_state == "open":
-            print("Taking photo for analysis")
-            file_out = take_picture(q="high", out_fmt="png", sleep_time=1,
-                                    out_dir="{}/raw".format(os.getenv("DATA_DIR")), )
-
-            # set template
-            print("Recreating template")
-            template_out = take_picture(filename="template", q="low", bw=True, out_fmt="jpeg", sleep_time=0,
-                                        out_dir="{}".format(os.getenv("DATA_DIR")))
-            template_path = os.path.join(os.getenv("DATA_DIR"), template_out)
-
-            # find bottles save to data/processed
-            tstamp = file_out.split(".")[0]
-            print("finding bottles {}".format(tstamp))
-
-            pather = os.path.join("{}/raw".format(os.getenv("DATA_DIR")), file_out)
-            contours_out = os.path.join("{}/inventory".format(os.getenv("DATA_DIR")), "{}.json".format(tstamp))
-            num = find_bottles(pather, contours_out)
-
-            # build inventory data/inventory
-            print("updating inventory at {} with {} bottles".format(tstamp, num))
-
-            update_inventory("{}/inventory.txt".format(os.getenv("DATA_DIR")), tstamp, num)
-            __send_typing_event(CHANNEL)
-            latest_image = __generate_new_cold_image()
-            with open(latest_image, "rb") as file_content:
-                slack_client.api_call("files.upload", channels=CHANNEL, file=file_content,
-                                      title="Bottles: {}".format(num), )
-
-        time.sleep(2)
+            time.sleep(2)
+    else:
+        print("Connection failed. Exception traceback printed above.")

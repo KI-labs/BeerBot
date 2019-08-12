@@ -1,7 +1,6 @@
-from __future__ import print_function
+from time import gmtime
 
 import os
-from time import gmtime
 
 
 def get_images(source):
@@ -36,3 +35,8 @@ def get_current_inventory():
         last_line = lines[-1]
         timestamp, count = last_line.split(",")
         return gmtime(int(timestamp)), int(count)
+
+
+def update_inventory(inventory_file, tstamp, num):
+    with open(inventory_file, 'a+') as out:
+        out.write('{},{}\n'.format(tstamp, num))
