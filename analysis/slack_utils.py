@@ -6,7 +6,7 @@ from datetime import datetime as dt
 from dateutil import tz
 
 from analysis.file_utils import get_current_inventory
-from analysis.visuals import cold_photo, debug_photo
+from analysis.visuals import cold_photo, engine_photo
 
 
 def parse_direct_mention(message_text):
@@ -61,23 +61,23 @@ def handle_inventory_command(command, channel, slack_client):
 
 def handle_help_command(command, channel, slack_client):
     print('Handling command "{}"'.format(command))
-    response = "Try one of the following commands: inventory, photo, debug"
+    response = "Try one of the following commands: inventory, photo, engine"
     slack_client.api_call("chat.postMessage", channel=channel, text=response)
 
 
-def handle_debug_command(command, channel, slack_client):
+def handle_engine_command(command, channel, slack_client):
     print('Handling command "{}"'.format(command))
     __send_typing_event(channel, slack_client)
 
     # handle static IO
-    debug_image = os.path.join(os.environ.get("DATA_DIR"), "debug.jpg")
-    debug_photo(debug_image)
+    debug_image = os.path.join(os.environ.get("DATA_DIR"), "engine.jpg")
+    engine_photo(debug_image)
     with open(debug_image, "rb") as file_content:
         slack_client.api_call(
             "files.upload",
             channels=channel,
             file=file_content,
-            title="DEBUG PREDICTION",
+            title="BeerBot Engine (:beer::robot::gear:)",
         )
 
 
@@ -88,7 +88,7 @@ def handle_cold_command(command, channel, slack_client):
     # handle static IO
     latest_image = os.path.join(os.environ.get("DATA_DIR"), "cold.jpg")
 
-    cold_photo(latest_image)
+    cold_photo(latest_image, simplify=True)
     current_inventory = get_current_inventory()
     current_count = 0
     if current_inventory:
@@ -107,5 +107,5 @@ COMMAND_HANDLERS = {
     "inventory": handle_inventory_command,
     "help": handle_help_command,
     "photo": handle_cold_command,
-    "debug": handle_debug_command,
+    "engine": handle_engine_command,
 }

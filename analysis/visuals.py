@@ -24,7 +24,7 @@ def fit_ellipse(contour):
     return list(zip(*fit))
 
 
-def cold_photo(output_im):
+def cold_photo(output_im, simplify=False):
     # find latest image
     data = get_current_inventory()
     input_im = build_image_path("raw", data["timestamp"], "png")
@@ -61,9 +61,10 @@ def cold_photo(output_im):
     # add contours around each bottle
     for contour, age in zip(contours, ages):
         normalized_age = min(0.98, np.divide(age, max_age))
-        fit = fit_ellipse(contour)
-        ax.plot(*zip(*fit), lw=4, c='k')
-        ax.plot(*zip(*fit), lw=2, c=cmap(normalized_age))
+        if simplify:
+            contour = fit_ellipse(contour)
+        ax.plot(*zip(*contour), lw=4, c='k')
+        ax.plot(*zip(*contour), lw=2, c=cmap(normalized_age))
     plt.axis('off')
 
     # add colorbar
@@ -77,7 +78,7 @@ def cold_photo(output_im):
     fig.savefig(output_im, dpi=200)
 
 
-def debug_photo(output_im):
+def engine_photo(output_im):
     # find latest image
     data = get_current_inventory()
 
