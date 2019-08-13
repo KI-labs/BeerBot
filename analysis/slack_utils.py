@@ -1,6 +1,5 @@
 import os
 import re
-import time
 from datetime import datetime as dt
 
 from dateutil import tz
@@ -44,7 +43,7 @@ def __message_for_inventory(inventory):
     if not inventory:
         return "I don't know yet what we have in stock"
     timestamp, count = inventory
-    timestamp = __handle_tz(time.mktime(timestamp))
+    timestamp = __handle_tz(timestamp)
     return "As of {} there are {} bottles in the fridge".format(timestamp.strftime("%d.%m.%y %H:%M %Z"), count)
 
 

@@ -1,5 +1,3 @@
-from time import gmtime
-
 import os
 
 
