@@ -7,3 +7,4 @@ ALERT_DELAY=10
 MIN_BEER_THRESHOLD=5
 DATA_DIR="/home/pi/BeerBot/data"
 TZ="Europe/Berlin"
+LOGO_PATH="/home/pi/BeerBot/assets/logo.png"

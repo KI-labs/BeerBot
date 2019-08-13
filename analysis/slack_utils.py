@@ -45,7 +45,7 @@ def __message_for_inventory(inventory):
         return "I don't know yet what we have in stock"
     timestamp, count = inventory
     timestamp = __handle_tz(time.mktime(timestamp))
-    return "As of {} there are {} bottles in the fridge".format(timestamp.strftime("%d.%m.%y %H:%M"), count)
+    return "As of {} there are {} bottles in the fridge".format(timestamp.strftime("%d.%m.%y %H:%M %Z"), count)
 
 
 def __send_typing_event(channel, slack_client):
@@ -71,7 +71,7 @@ def handle_engine_command(command, channel, slack_client):
 
     # handle static IO
     debug_image = os.path.join(os.environ.get("DATA_DIR"), "engine.jpg")
-    engine_photo(debug_image)
+    engine_photo(debug_image, logo_path=os.environ.get("LOGO_PATH"))
     with open(debug_image, "rb") as file_content:
         slack_client.api_call(
             "files.upload",
@@ -88,7 +88,7 @@ def handle_cold_command(command, channel, slack_client):
     # handle static IO
     latest_image = os.path.join(os.environ.get("DATA_DIR"), "cold.jpg")
 
-    cold_photo(latest_image, simplify=True)
+    cold_photo(latest_image, simplify=True, logo_path=os.environ.get("LOGO_PATH"))
     current_inventory = get_current_inventory()
     current_count = 0
     if current_inventory:

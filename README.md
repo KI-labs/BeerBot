@@ -5,7 +5,7 @@ This repository is the central location for all things related to the beloved **
 
 Tread _carefully_ since this is an extremely important project within [KI labs](https://ki-labs.com/).
 
-![alt text](assets/logo.png "BeerBot")
+![alt text](assets/beer_logo.png "BeerBot")
 
 # Features
 
@@ -36,12 +36,14 @@ Minimal configuration with a `.envrc` file based on `.envrc.template` is require
 ```text
 SLACK_OAUTH_TOKEN=
 SLACK_BOT_OAUTH_TOKEN=
+ENDPOINT=
 CHANNEL=
 LISTEN_DELAY=1
 ALERT_DELAY=10
 MIN_BEER_THRESHOLD=5
 DATA_DIR="/home/pi/BeerBot/data"
 TZ="Europe/Berlin"
+LOGO_PATH="/home/pi/BeerBot/assets/logo.png"
 ```
 
 # Deployment

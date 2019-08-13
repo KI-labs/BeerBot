@@ -19,6 +19,7 @@ from analysis.inventory import update_inventory
 
 def predict(url, input_im, response_out, conf=0.8, nms=0.2):
     r = requests.post(url, data=open(input_im, 'rb').read(), params={"conf": conf, "nms": nms})
+    # TODO -> handle missing endpoint
     with open(response_out, 'w') as dst:
         json.dump(r.json(), dst, indent=2, default=str)
 

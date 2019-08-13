@@ -24,7 +24,7 @@ def fit_ellipse(contour):
     return list(zip(*fit))
 
 
-def cold_photo(output_im, simplify=False):
+def cold_photo(output_im, simplify=False, logo_path=None):
     # find latest image
     data = get_current_inventory()
     input_im = build_image_path("raw", data["timestamp"], "png")
@@ -48,14 +48,14 @@ def cold_photo(output_im, simplify=False):
     cmap = plt.cm.get_cmap('Blues')
 
     # DUMMY PLOT
-    fig, ax = plt.subplots(frameon=False)
+    fig, ax = plt.subplots(figsize=(12,8), dpi=200)
     Z = [[0, 0], [0, 0]]
     levels = range(0, max_age, 60)
     CS3 = ax.contourf(Z, levels, vmin=0, vmax=max_age, cmap=cmap)
     ax.clear()
 
     # create output image
-    ax.imshow(image, cmap='gray', alpha=0.7, origin='upper')
+    ax.imshow(image, cmap='gray', alpha=0.7)
     ax.set_axis_off()
 
     # add contours around each bottle
@@ -68,17 +68,23 @@ def cold_photo(output_im, simplify=False):
     plt.axis('off')
 
     # add colorbar
-    cax = fig.add_axes([0.27, 0.075, 0.5, 0.05])
+    cax = fig.add_axes([0.25, 0.05, 0.5, 0.025])
     cb1 = fig.colorbar(CS3, cax=cax, cmap=cmap,
                        ticks=[],
                        orientation='horizontal')
-    cb1.set_label('Beer Coldness', fontsize=16)
+    cb1.set_label('Beer Coldness', fontsize=20)
+
+    # add logo
+    if logo_path:
+        logo_ax = fig.add_axes([0.68, 0.92, 0.3, 0.1], anchor='SW', zorder=1)
+        logo_ax.imshow(__load_mask(logo_path))
+        logo_ax.axis('off')
 
     plt.tight_layout()
     fig.savefig(output_im, dpi=200)
 
 
-def engine_photo(output_im):
+def engine_photo(output_im, logo_path=None):
     # find latest image
     data = get_current_inventory()
 
@@ -92,7 +98,7 @@ def engine_photo(output_im):
     mask = __load_mask(input_mask)
     response = __load_predictions(response_out)
 
-    fig, ax = plt.subplots(figsize=(12, 8))
+    fig, ax = plt.subplots(figsize=(12, 8), dpi=200)
     ax.imshow(image, alpha=0.7)
     for ind, r in enumerate(response):
         w = r['x2'] - r['x1']
@@ -107,5 +113,11 @@ def engine_photo(output_im):
     plt.imshow(np.ma.masked_where(mask == 0, mask), cmap='Reds_r', alpha=0.75)
     plt.axis('off')
 
+    # add logo
+    if logo_path:
+        logo_ax = fig.add_axes([0.68, 0.92, 0.3, 0.1], anchor='SW', zorder=1)
+        logo_ax.imshow(__load_mask(logo_path))
+        logo_ax.axis('off')
+
     plt.tight_layout()
-    fig.savefig(output_im, dpi=200)
+    fig.savefig(output_im)
