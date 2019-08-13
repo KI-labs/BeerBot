@@ -1,10 +1,11 @@
 import time
 
+import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 import numpy as np
 
 from analysis.file_utils import build_image_path
-from analysis.find_bottles import __load_image
+from analysis.find_bottles import __load_image, __load_mask, __load_predictions
 from analysis.inventory import get_current_inventory
 
 
@@ -61,8 +62,8 @@ def cold_photo(output_im):
     for contour, age in zip(contours, ages):
         normalized_age = min(0.98, np.divide(age, max_age))
         fit = fit_ellipse(contour)
-        ax.plot(*zip(*fit), lw=5, c='k')
-        ax.plot(*zip(*fit), lw=3, c=cmap(normalized_age))
+        ax.plot(*zip(*fit), lw=4, c='k')
+        ax.plot(*zip(*fit), lw=2, c=cmap(normalized_age))
     plt.axis('off')
 
     # add colorbar
@@ -71,6 +72,39 @@ def cold_photo(output_im):
                        ticks=[],
                        orientation='horizontal')
     cb1.set_label('Beer Coldness', fontsize=16)
+
+    plt.tight_layout()
+    fig.savefig(output_im, dpi=200)
+
+
+def debug_photo(output_im):
+    # find latest image
+    data = get_current_inventory()
+
+    # get latest inputs
+    input_im = build_image_path("raw", data["timestamp"], "png")
+    input_mask = build_image_path("mask", data["timestamp"], "png")
+    response_out = build_image_path("response", data["timestamp"], "json")
+
+    # load all inputs
+    image = __load_image(input_im)
+    mask = __load_mask(input_mask)
+    response = __load_predictions(response_out)
+
+    fig, ax = plt.subplots(figsize=(12, 8))
+    ax.imshow(image, alpha=0.7)
+    for ind, r in enumerate(response):
+        w = r['x2'] - r['x1']
+        h = r['y2'] - r['y1']
+        bbox = patches.Rectangle((r["x1"], r["y1"]), w, h,
+                                 linewidth=2.5,
+                                 edgecolor="y",
+                                 facecolor="none")
+        ax.add_patch(bbox)
+
+    # add the refined mask of the bottle caps
+    plt.imshow(np.ma.masked_where(mask == 0, mask), cmap='Reds_r', alpha=0.75)
+    plt.axis('off')
 
     plt.tight_layout()
     fig.savefig(output_im, dpi=200)

@@ -1,12 +1,12 @@
-import time
-
 import os
 import re
+import time
 from datetime import datetime as dt
+
 from dateutil import tz
 
 from analysis.file_utils import get_current_inventory
-from analysis.visuals import cold_photo
+from analysis.visuals import cold_photo, debug_photo
 
 
 def parse_direct_mention(message_text):
@@ -68,8 +68,17 @@ def handle_help_command(command, channel, slack_client):
 def handle_debug_command(command, channel, slack_client):
     print('Handling command "{}"'.format(command))
     __send_typing_event(channel, slack_client)
-    response = "Debug coming soon!"
-    slack_client.api_call("chat.postMessage", channel=channel, text=response)
+
+    # handle static IO
+    debug_image = os.path.join(os.environ.get("DATA_DIR"), "debug.jpg")
+    debug_photo(debug_image)
+    with open(debug_image, "rb") as file_content:
+        slack_client.api_call(
+            "files.upload",
+            channels=channel,
+            file=file_content,
+            title="DEBUG PREDICTION",
+        )
 
 
 def handle_cold_command(command, channel, slack_client):
