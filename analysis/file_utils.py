@@ -34,7 +34,7 @@ def get_current_inventory():
             return None
         last_line = lines[-1]
         timestamp, count = last_line.split(",")
-        return gmtime(int(timestamp)), int(count)
+        return int(timestamp), int(count)
 
 
 def update_inventory(inventory_file, tstamp, num):
