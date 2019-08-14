@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from slackclient import SlackClient
 
 from analysis.file_utils import get_current_inventory
+from analysis.slack_utils import __handle_tz
 
 # load ENV from .env
 load_dotenv()
@@ -30,8 +31,9 @@ if __name__ == "__main__":
             # check current inventory
             current_inventory = get_current_inventory()
             if current_inventory:
-                _timestamp, count = current_inventory
-                print("[{}] Current inventory - {}".format(time.strftime('%Y-%m-%dT%H:%M:%SZ', _timestamp), count))
+                timestamp, count = current_inventory
+                timestamp = __handle_tz(timestamp)
+                print("[{}] Current inventory - {}".format(timestamp.strftime("%d.%m.%y %H:%M %Z"), count))
                 if count < MIN_BEER_THRESHOLD:
                     slack_client.api_call(
                         "chat.postMessage",
