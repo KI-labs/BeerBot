@@ -87,7 +87,7 @@ def handle_cold_command(command, channel, slack_client):
     # handle static IO
     latest_image = os.path.join(os.environ.get("DATA_DIR"), "cold.jpg")
 
-    cold_photo(latest_image, simplify=True, logo_path=os.environ.get("LOGO_PATH"))
+    cold_photo(latest_image, simplify=False, logo_path=os.environ.get("LOGO_PATH"))
     current_inventory = get_current_inventory()
     current_count = 0
     if current_inventory:

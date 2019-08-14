@@ -63,8 +63,8 @@ def cold_photo(output_im, simplify=False, logo_path=None):
         normalized_age = min(0.98, np.divide(age, max_age))
         if simplify:
             contour = fit_ellipse(contour)
-        ax.plot(*zip(*contour), lw=4, c='k')
-        ax.plot(*zip(*contour), lw=2, c=cmap(normalized_age))
+        ax.plot(*zip(*contour), lw=5, c='k')
+        ax.plot(*zip(*contour), lw=2.5, c=cmap(normalized_age))
     plt.axis('off')
 
     # add colorbar
@@ -104,7 +104,7 @@ def engine_photo(output_im, logo_path=None):
         w = r['x2'] - r['x1']
         h = r['y2'] - r['y1']
         bbox = patches.Rectangle((r["x1"], r["y1"]), w, h,
-                                 linewidth=2.5,
+                                 linewidth=3,
                                  edgecolor="y",
                                  facecolor="none")
         ax.add_patch(bbox)

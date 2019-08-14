@@ -88,7 +88,7 @@ if __name__ == "__main__":
                 __send_typing_event(CHANNEL, slack_client)
 
                 # visualize NEW cold image
-                cold_photo(COLD_IMAGE_PATH, simplify=True, logo_path=os.environ.get("LOGO_PATH"))
+                cold_photo(COLD_IMAGE_PATH, simplify=False, logo_path=os.environ.get("LOGO_PATH"))
                 with open(COLD_IMAGE_PATH, "rb") as file_content:
                     slack_client.api_call("files.upload", channels=CHANNEL, file=file_content,
                                           title="Bottles: {}".format(num), )
