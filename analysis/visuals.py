@@ -47,25 +47,28 @@ def cold_photo(output_im, simplify=False, logo_path=None):
     # build colormap
     cmap = plt.cm.get_cmap('Blues')
 
-    # DUMMY PLOT
-    fig, ax = plt.subplots(figsize=(12,8), dpi=200)
-    Z = [[0, 0], [0, 0]]
-    levels = range(0, max_age, 60)
-    CS3 = ax.contourf(Z, levels, vmin=0, vmax=max_age, cmap=cmap)
+    # DUMMY figure
+    fig, ax = plt.subplots(figsize=(12, 8), dpi=200)
+    levels = np.arange(0, max_age + 60, 60)
+    CS3 = ax.contourf([[0, 0], [0, 0]], levels, vmin=0, vmax=max_age, cmap=cmap)
     ax.clear()
 
     # create output image
     ax.imshow(image, cmap='gray', alpha=0.7)
-    ax.set_axis_off()
 
-    # add contours around each bottle
     for contour, age in zip(contours, ages):
         normalized_age = min(0.98, np.divide(age, max_age))
         if simplify:
             contour = fit_ellipse(contour)
         ax.plot(*zip(*contour), lw=5, c='k')
+        ax.add_patch(patches.Polygon(np.array(contour),
+                                     linewidth=3,
+                                     edgecolor="None",
+                                     facecolor=cmap(normalized_age),
+                                     alpha=0.5))
         ax.plot(*zip(*contour), lw=2.5, c=cmap(normalized_age))
-    plt.axis('off')
+    ax.axis('equal')
+    ax.set_axis_off()
 
     # add colorbar
     cax = fig.add_axes([0.25, 0.05, 0.5, 0.025])
@@ -90,28 +93,39 @@ def engine_photo(output_im, logo_path=None):
 
     # get latest inputs
     input_im = build_image_path("raw", data["timestamp"], "png")
-    input_mask = build_image_path("mask", data["timestamp"], "png")
     response_out = build_image_path("response", data["timestamp"], "json")
 
     # load all inputs
     image = __load_image(input_im)
-    mask = __load_mask(input_mask)
     response = __load_predictions(response_out)
 
+    # build colormap
+    cmap = plt.cm.get_cmap('Reds')
+
+    # DUMMY figure
     fig, ax = plt.subplots(figsize=(12, 8), dpi=200)
+    max_conf = 1
+    levels = np.arange(0, max_conf + 0.05, 0.05)
+    CS3 = ax.contourf([[0, 0], [0, 0]], levels, vmin=0, vmax=max_conf, cmap=cmap)
+    ax.clear()
+
     ax.imshow(image, alpha=0.7)
     for ind, r in enumerate(response):
         w = r['x2'] - r['x1']
         h = r['y2'] - r['y1']
-        bbox = patches.Rectangle((r["x1"], r["y1"]), w, h,
-                                 linewidth=3,
-                                 edgecolor="y",
-                                 facecolor="none")
-        ax.add_patch(bbox)
+        ax.add_patch(patches.Rectangle((r["x1"], r["y1"]), w, h,
+                                       linewidth=3,
+                                       edgecolor=cmap(r['conf']),
+                                       facecolor="None"))
+    ax.axis('equal')
+    ax.set_axis_off()
 
-    # add the refined mask of the bottle caps
-    plt.imshow(np.ma.masked_where(mask == 0, mask), cmap='Reds_r', alpha=0.75)
-    plt.axis('off')
+    # set colorbar for confidence
+    cax = fig.add_axes([0.25, 0.05, 0.5, 0.025])
+    cb1 = fig.colorbar(CS3, cax=cax, cmap=cmap,
+                       ticks=[],
+                       orientation='horizontal')
+    cb1.set_label('Prediction Confidence', fontsize=20)
 
     # add logo
     if logo_path:

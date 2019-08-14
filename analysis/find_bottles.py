@@ -3,6 +3,7 @@ def warn(*args, **kwargs):
     pass
 
 
+import os
 import warnings
 
 warnings.warn = warn
@@ -17,16 +18,21 @@ from scipy import ndimage
 from analysis.inventory import update_inventory
 
 
-def predict(url, input_im, response_out, conf=0.8, nms=0.2):
-    r = requests.post(url, data=open(input_im, 'rb').read(), params={"conf": conf, "nms": nms})
-    # TODO -> handle missing endpoint
-    with open(response_out, 'w') as dst:
-        json.dump(r.json(), dst, indent=2, default=str)
+def predict(url, input_im, response_out, conf=0.75, nms=0.2):
+    try:
+        r = requests.post(url, data=open(input_im, 'rb').read(), params={"conf": conf, "nms": nms})
+        with open(response_out, 'w') as dst:
+            json.dump(r.json(), dst, indent=2, default=str)
+    except requests.exceptions.RequestException as e:
+        print("Endpoint Error", e)
 
 
 def __load_predictions(input_response):
-    with open(input_response, 'r') as src:
-        return json.load(src)
+    if os.path.isfile(input_response):
+        with open(input_response, 'r') as src:
+            return json.load(src)
+    else:
+        return {}
 
 
 def __load_mask(input_mask):
@@ -42,10 +48,10 @@ def __load_image(input_im):
 
 def adjust_bounds(bounds, image_shape, fac=0):
     x0, y0, x1, y1 = bounds
-    x0 = min(max(x0-fac, 0), image_shape[1])
-    x1 = min(max(x1+fac, 0), image_shape[1])
-    y0 = min(max(y0-fac, 0), image_shape[0])
-    y1 = min(max(y1+fac, 0), image_shape[0])
+    x0 = min(max(x0 - fac, 0), image_shape[1])
+    x1 = min(max(x1 + fac, 0), image_shape[1])
+    y0 = min(max(y0 - fac, 0), image_shape[0])
+    y1 = min(max(y1 + fac, 0), image_shape[0])
     return x0, y0, x1, y1
 
 
@@ -95,7 +101,9 @@ def identify_bottles(input_im, response_out, output_mask, fac=10, min_area=1000,
 
         # if labels are empty
         if sum(labels.flatten()) == 0:
-            labels[:] = 1
+            # re-adjust to actual bounding box (no expansion)
+            x1, y1, x2, y2 = adjust_bounds([x1, y1, x2, y2], img_size, -fac)
+            labels = np.ones((y2 - y1, x2 - x1), dtype=np.int)
         mask[y1:y2, x1:x2] += labels
 
     # save mask
@@ -135,10 +143,10 @@ def save_contours(contours, contours_out):
         json.dump(temp, dst, indent=2, default=str)
 
 
-def find_bottles(url, input_im, response_out, mask_out, contours_out):
+def find_bottles(url, input_im, response_out, mask_out, contours_out, conf=0.75, nms=0.2):
     # call endpoint - get bottle locations
     print("predicting against endpoint")
-    predict(url, input_im, response_out)
+    predict(url, input_im, response_out, conf=conf, nms=nms)
 
     # identify caps
     print("identifying bottles")
