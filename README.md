@@ -21,7 +21,7 @@ BeerBot is a slackbot capable of the following:
 
 # Installation 
 
-PlantBot can be installed by cloning this repo and its python requirements.
+BeerBot can be installed by cloning this repo and its python requirements.
 
 ```bash
 $ pip3 install -r requirements.txt
