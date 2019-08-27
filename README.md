@@ -46,8 +46,10 @@ TZ="Europe/Berlin"
 
 # Deployment
 
-There are two scripts for running the BeerBot engine.
+There are three scripts for running the BeerBot engine.
 
+- `./beerbot.py`
+  - engine for checking door state and image processing
 - `./slackbot_alert.py`
   - responsible for alerting when beer supply is critically low
 - `./slackbot_listener.py`
