@@ -1,7 +1,7 @@
 certifi==2019.3.9
 chardet==3.0.4
 idna==2.8
-numpy==1.16.2
+numpy==1.22.0
 python-dotenv==0.10.1
 requests==2.21.0
 Shapely==1.6.4.post2
